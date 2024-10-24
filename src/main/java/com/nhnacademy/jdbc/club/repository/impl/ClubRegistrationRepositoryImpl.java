@@ -16,20 +16,56 @@ public class ClubRegistrationRepositoryImpl implements ClubRegistrationRepositor
     @Override
     public int save(Connection connection, String studentId, String clubId) {
         //todo#11 - 핵생 -> 클럽 등록, executeUpdate() 결과를 반환
+        String sql = "insert into jdbc_club_registrations (student_id, club_id) values (?, ?)";
 
-        return 0;
+        try (PreparedStatement psmt = connection.prepareStatement(sql)) {
+            psmt.setString(1, studentId);
+            psmt.setString(2, clubId);
+            return psmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public int deleteByStudentIdAndClubId(Connection connection, String studentId, String clubId) {
         //todo#12 - 핵생 -> 클럽 탈퇴, executeUpdate() 결과를 반환
-        return 0;
+        String sql = "delete from jdbc_club_registrations where student_id=? and club_id=?";
+
+        try (PreparedStatement psmt = connection.prepareStatement(sql)) {
+            psmt.setString(1, studentId);
+            psmt.setString(2, clubId);
+            return psmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public List<ClubStudent> findClubStudentsByStudentId(Connection connection, String studentId) {
         //todo#13 - 핵생 -> 클럽 등록, executeUpdate() 결과를 반환
-        return Collections.emptyList();
+        String sql = "select a.id as student_id, a.name as student_name, c.club_id, c.club_name " +
+                "from jdbc_students a inner join jdbc_club_registrations b on a.id=b.student_id " +
+                "inner join jdbc_club c on b.club_id=c.club_id where a.id=?";
+        ResultSet rs = null;
+        List<ClubStudent> clubStudentList;
+        try (PreparedStatement psmt = connection.prepareStatement(sql)) {
+            psmt.setString(1, studentId);
+            rs = psmt.executeQuery();
+            clubStudentList = new ArrayList<>();
+            while (rs.next()) {
+                clubStudentList.add(new ClubStudent(
+                        rs.getString("student_id"),
+                        rs.getString("student_name"),
+                        rs.getString("club_id"),
+                        rs.getString("club_name"))
+                );
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return clubStudentList;
     }
 
     @Override
